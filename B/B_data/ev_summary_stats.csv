@@ -1,0 +1,7 @@
+metric,value
+session_count,102.0
+mean_arrival_hour,8.91
+mean_departure_hour,17.35
+mean_dwell_hours,8.45
+total_required_increment_kwh,2018.6
+v2b_share,0.667

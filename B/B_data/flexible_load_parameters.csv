@@ -1,0 +1,4 @@
+load_block,noninterruptible_share,max_shiftable_kw,max_sheddable_kw,rebound_factor,penalty_cny_per_kwh_not_served
+office_building,0.78,80,35,1.05,1.2
+wet_lab,0.92,25,10,1.02,3.0
+teaching_center,0.7,50,20,1.08,1.5

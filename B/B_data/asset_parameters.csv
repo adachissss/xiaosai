@@ -1,0 +1,16 @@
+parameter,value,note
+stationary_battery_energy_capacity_kwh,1200.0,One lithium-ion stationary battery bank
+stationary_battery_initial_energy_kwh,600.0,Initial energy at 2025-07-14 00:00
+stationary_battery_min_energy_kwh,120.0,SOC lower bound = 10%
+stationary_battery_max_energy_kwh,1080.0,SOC upper bound = 90%
+stationary_battery_max_charge_power_kw,300.0,AC-side charge limit
+stationary_battery_max_discharge_power_kw,300.0,AC-side discharge limit
+stationary_battery_charge_efficiency,0.95,One-way efficiency
+stationary_battery_discharge_efficiency,0.95,One-way efficiency
+stationary_battery_degradation_cost_cny_per_kwh_throughput,0.055,Equivalent wear cost for throughput
+pv_installed_capacity_kwp,620.0,Rooftop and carport PV nameplate capacity
+pv_inverter_limit_kw,550.0,Usable AC-side PV limit
+ev_bidirectional_charger_count,24.0,Bidirectional chargers available
+ev_unidirectional_charger_count,16.0,Unidirectional chargers available
+max_simultaneous_ev_connections,40.0,Physical charging spaces
+default_time_step_hours,0.25,15-minute resolution

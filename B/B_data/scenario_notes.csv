@@ -1,0 +1,8 @@
+item,value
+scenario_name,Base week with one rainy day and one grid-constrained afternoon
+campus_type,"Research park with office, wet lab, and teaching center"
+period,"2025-07-14 to 2025-07-20, 15-minute resolution"
+stress_event_1,2025-07-16 11:00-14:00 low irradiance due to storm clouds
+stress_event_2,2025-07-17 13:00-16:00 grid import limit reduced to 650 kW
+stress_event_3,2025-07-18 17:00-19:00 grid import limit reduced to 700 kW during evening peak
+recommended_objective,Minimize energy cost + storage degradation + EV degradation + load discomfort + emissions penalty (optional)

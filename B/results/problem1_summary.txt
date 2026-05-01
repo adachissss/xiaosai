@@ -1,0 +1,19 @@
+B题第一问运行结果摘要
+========================================
+求解状态：Optimization terminated successfully. (HiGHS Status 7: Optimal)
+协同优化目标值：67753.443
+
+核心指标对比：
+- total_cost_cny: baseline=51048.5, coordinated=44474.6
+- grid_import_energy_kwh: baseline=63696.6, coordinated=64007.5
+- grid_export_energy_kwh: baseline=0, coordinated=0
+- peak_grid_import_kw: baseline=624.8, coordinated=607.55
+- pv_consumption_rate: baseline=1, coordinated=1
+- pv_curtailment_rate: baseline=0, coordinated=0
+- ev_satisfaction_rate: baseline=0.990196, coordinated=0.990196
+- load_shift_down_kwh: baseline=0, coordinated=5649.38
+- load_shift_up_kwh: baseline=0, coordinated=5949.31
+- load_shed_kwh: baseline=0, coordinated=693.408
+
+约束检查问题：
+- 存在 EV 离站电量缺口松弛变量大于 0，说明至少一个会话在物理充电功率和停留时长下无法达到需求。

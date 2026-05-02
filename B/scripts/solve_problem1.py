@@ -35,9 +35,12 @@ SCHEME_LABELS = {
 
 
 def plot_outputs(out_dir: Path, schedules: dict[str, pd.DataFrame]) -> None:
-    """输出论文可用的多方案对比图。"""
+    """输出论文可用的多方案对比图，统一保存到 results/figures。"""
 
     import matplotlib.pyplot as plt
+
+    fig_dir = out_dir / "figures"
+    fig_dir.mkdir(parents=True, exist_ok=True)
 
     t = pd.to_datetime(next(iter(schedules.values()))["timestamp"])
 
@@ -48,7 +51,7 @@ def plot_outputs(out_dir: Path, schedules: dict[str, pd.DataFrame]) -> None:
     plt.title("Grid Import Power Comparison")
     plt.legend()
     plt.tight_layout()
-    plt.savefig(out_dir / "grid_import_comparison.png", dpi=180)
+    plt.savefig(fig_dir / "grid_import_comparison.png", dpi=180)
     plt.close()
 
     plt.figure(figsize=(14, 5))
@@ -58,7 +61,7 @@ def plot_outputs(out_dir: Path, schedules: dict[str, pd.DataFrame]) -> None:
     plt.title("Stationary Battery Energy Comparison")
     plt.legend()
     plt.tight_layout()
-    plt.savefig(out_dir / "battery_energy_comparison.png", dpi=180)
+    plt.savefig(fig_dir / "battery_energy_comparison.png", dpi=180)
     plt.close()
 
     plt.figure(figsize=(14, 5))
@@ -69,7 +72,7 @@ def plot_outputs(out_dir: Path, schedules: dict[str, pd.DataFrame]) -> None:
     plt.title("Aggregated EV Net Power Comparison")
     plt.legend()
     plt.tight_layout()
-    plt.savefig(out_dir / "ev_net_power_comparison.png", dpi=180)
+    plt.savefig(fig_dir / "ev_net_power_comparison.png", dpi=180)
     plt.close()
 
     # 光伏图只展示完整协同方案，同时保留 PV available / used / curtailed 三条曲线。
@@ -82,7 +85,7 @@ def plot_outputs(out_dir: Path, schedules: dict[str, pd.DataFrame]) -> None:
     plt.title("PV Utilization in Full Coordination Scheme")
     plt.legend()
     plt.tight_layout()
-    plt.savefig(out_dir / "pv_utilization.png", dpi=180)
+    plt.savefig(fig_dir / "pv_utilization.png", dpi=180)
     plt.close()
 
 

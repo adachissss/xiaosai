@@ -33,7 +33,50 @@ class VarIndex:
         return arr
 
 
+def solve_lp_strategy(
+    data: ProblemData,
+    *,
+    allow_ev_discharge: bool,
+    allow_flexible_load: bool,
+    scheme_name: str,
+) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
+    """可配置的线性规划策略。
+
+    参数含义：
+    - allow_ev_discharge=False：EV 只能智能充电，不能 V2B 放电；
+    - allow_flexible_load=False：建筑负荷不允许削减或转移；
+    - 两者都为 True 时，就是完整协同方案 S3。
+    """
+
+    return _solve_lp_strategy_impl(
+        data,
+        allow_ev_discharge=allow_ev_discharge,
+        allow_flexible_load=allow_flexible_load,
+        scheme_name=scheme_name,
+    )
+
+
 def build_and_solve_coordinated(data: ProblemData) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
+    """完整协同优化方案 S3。
+
+    这个包装函数保留原来的调用方式，内部调用可配置 LP 策略。
+    """
+
+    return solve_lp_strategy(
+        data,
+        allow_ev_discharge=True,
+        allow_flexible_load=True,
+        scheme_name="S3_full_coordination",
+    )
+
+
+def _solve_lp_strategy_impl(
+    data: ProblemData,
+    *,
+    allow_ev_discharge: bool,
+    allow_flexible_load: bool,
+    scheme_name: str,
+) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
     """协同优化方案。
 
     这个函数建立车辆级 EV + 固定储能 + 柔性建筑负荷 + 光伏 + 电网的线性规划模型。
@@ -111,7 +154,11 @@ def build_and_solve_coordinated(data: ProblemData) -> tuple[pd.DataFrame, pd.Dat
             in_station = row.arrival_idx <= t <= row.departure_idx
             if in_station:
                 bounds[ev_ch[n, t]] = (0.0, float(row.max_charge_power_kw))
-                dis_max = float(row.max_discharge_power_kw) if int(row.v2b_allowed) == 1 else 0.0
+                # S2 等部分协同方案中，EV 只能智能充电，不能 V2B 放电。
+                if allow_ev_discharge and int(row.v2b_allowed) == 1:
+                    dis_max = float(row.max_discharge_power_kw)
+                else:
+                    dis_max = 0.0
                 bounds[ev_dis[n, t]] = (0.0, dis_max)
             else:
                 bounds[ev_ch[n, t]] = (0.0, 0.0)
@@ -123,9 +170,15 @@ def build_and_solve_coordinated(data: ProblemData) -> tuple[pd.DataFrame, pd.Dat
             native_col = row.load_block + "_kw"
             native = float(ts.loc[t, native_col])
             interruptible = max(0.0, native * (1.0 - float(row.noninterruptible_share)))
-            bounds[shift_down[b, t]] = (0.0, min(float(row.max_shiftable_kw), interruptible))
-            bounds[shift_up[b, t]] = (0.0, float(row.rebound_factor) * float(row.max_shiftable_kw))
-            bounds[shed[b, t]] = (0.0, min(float(row.max_sheddable_kw), interruptible))
+            if allow_flexible_load:
+                bounds[shift_down[b, t]] = (0.0, min(float(row.max_shiftable_kw), interruptible))
+                bounds[shift_up[b, t]] = (0.0, float(row.rebound_factor) * float(row.max_shiftable_kw))
+                bounds[shed[b, t]] = (0.0, min(float(row.max_sheddable_kw), interruptible))
+            else:
+                # S2 中建筑负荷不参与需求响应，因此三类柔性负荷变量均固定为 0。
+                bounds[shift_down[b, t]] = (0.0, 0.0)
+                bounds[shift_up[b, t]] = (0.0, 0.0)
+                bounds[shed[b, t]] = (0.0, 0.0)
 
     # 先用字典暂存稀疏约束，最后统一转成 scipy sparse matrix。
     eq_rows: list[dict[int, float]] = []
@@ -268,4 +321,4 @@ def build_and_solve_coordinated(data: ProblemData) -> tuple[pd.DataFrame, pd.Dat
     ev_result["shortfall_kwh"] = [x[ev_shortfall[n]] for n in range(N)]
     ev_result["satisfied"] = ev_result["final_energy_kwh"] + ev_result["shortfall_kwh"] + 1e-6 >= ev_result["required_energy_at_departure_kwh"]
 
-    return schedule, ev_result, {"objective": result.fun, "status": result.message}
+    return schedule, ev_result, {"objective": result.fun, "status": result.message, "scheme": scheme_name}

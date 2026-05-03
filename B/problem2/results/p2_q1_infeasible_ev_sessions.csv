@@ -1,0 +1,2 @@
+session_id,ev_type,arrival_time,departure_time,max_charge_power_kw,need_kwh,max_charge_possible_kwh,infeasible_gap_kwh
+S102,SUV,2025-07-20 08:45:00,2025-07-20 12:15:00,7,48.2,24.5,23.700000000000003

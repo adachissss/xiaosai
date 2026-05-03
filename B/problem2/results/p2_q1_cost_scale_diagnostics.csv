@@ -1,0 +1,6 @@
+component,value_cny,ratio_to_deg_total
+peak_import_penalty,4860.397080902258,4.8855465764833195
+shift_plus_shed_penalty,1412.0232053540108,1.4193295366624017
+battery_degradation_cost,712.383157894737,0.7160692923366931
+ev_degradation_cost,282.4691078267445,0.2839307076633069
+battery_unit_cost_used,0.055,

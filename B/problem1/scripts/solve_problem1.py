@@ -8,7 +8,7 @@
 - S3_full_coordination：完整协同，储能 + EV V2B + 建筑柔性负荷联合优化。
 
 运行：
-    conda run -n xiaosai-b python scripts/solve_problem1.py
+    conda run -n xiaosai-b python problem1/scripts/solve_problem1.py
 """
 from __future__ import annotations
 
@@ -171,7 +171,7 @@ def write_outputs(
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data-dir", type=Path, default=Path(__file__).resolve().parents[1] / "B_data")
+    parser.add_argument("--data-dir", type=Path, default=Path(__file__).resolve().parents[2] / "B_data")
     parser.add_argument("--out-dir", type=Path, default=Path(__file__).resolve().parents[1] / "results")
     args = parser.parse_args()
 

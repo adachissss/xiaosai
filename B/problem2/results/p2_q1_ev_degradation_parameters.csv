@@ -1,0 +1,4 @@
+ev_type,session_count,min_cost_cny_per_kwh,mean_cost_cny_per_kwh,max_cost_cny_per_kwh
+SUV,32,0.06,0.070625,0.078
+compact,40,0.093,0.10047500000000001,0.108
+sedan,30,0.078,0.08836666666666666,0.099

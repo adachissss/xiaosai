@@ -8,6 +8,8 @@
 
 已完成第二问第 2 小问：在 S3 完整协同模型基础上加入寿命损耗成本，形成 `S4_degradation_aware` 调度方案，并输出 S3/S4 对比结果。
 
+已完成第二问第 3 小问：基于 S3/S4 对比结果，讨论引入寿命损耗前后系统调度行为的主要变化。
+
 ## 目录结构
 
 ```text
@@ -17,6 +19,9 @@ problem2/
 │   ├── degradation_aware_strategy.py     # 第二问第2小问 S4 寿命感知优化模型
 │   ├── solve_degradation_indicator.py    # 第二问第1小问入口脚本
 │   └── solve_problem2.py                 # 第二问第2小问入口脚本
+├── 第二问第1小问解决思路.md
+├── 第二问第2小问解决思路.md
+├── 第二问第3小问解决思路.md
 └── results/
     ├── p2_q1_degradation_metrics.csv     # 第一问四方案的寿命损耗指标试算
     ├── p2_q1_ev_degradation_parameters.csv

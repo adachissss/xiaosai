@@ -1,0 +1,34 @@
+B题第二问第2小问：考虑电池寿命损耗的协同调度
+================================================================
+
+1. 模型思路
+在第一问 S3 完整协同模型基础上，保持约束不变，在目标函数中加入固定储能和 EV 电池寿命损耗成本。
+目标函数为：min 运行成本 + C_bat_deg + C_ev_deg。
+其中固定储能和 EV 均采用第1小问确定的等效吞吐量寿命损耗模型。
+
+2. S4 求解状态
+求解状态：Optimization terminated successfully. (HiGHS Status 7: Optimal)
+目标值：68720.913090
+固定储能单位吞吐寿命成本：0.0550 元/kWh
+
+3. S3 与 S4 核心指标对比
+              scheme      label  operation_cost_cny  battery_degradation_cost_cny  ev_degradation_cost_cny  total_degradation_cost_cny  total_comprehensive_cost_cny  grid_import_energy_kwh  grid_export_energy_kwh  peak_grid_import_kw  pv_consumption_rate  battery_throughput_kwh  ev_charge_kwh  ev_discharge_kwh  ev_throughput_kwh  ev_shortfall_kwh  load_shift_down_kwh  load_shed_kwh  unmet_load_kwh  delta_vs_S3_operation_cost_cny  delta_vs_S3_battery_degradation_cost_cny  delta_vs_S3_ev_degradation_cost_cny  delta_vs_S3_total_degradation_cost_cny  delta_vs_S3_total_comprehensive_cost_cny  delta_vs_S3_grid_import_energy_kwh  delta_vs_S3_grid_export_energy_kwh  delta_vs_S3_peak_grid_import_kw  delta_vs_S3_pv_consumption_rate  delta_vs_S3_battery_throughput_kwh  delta_vs_S3_ev_charge_kwh  delta_vs_S3_ev_discharge_kwh  delta_vs_S3_ev_throughput_kwh  delta_vs_S3_ev_shortfall_kwh  delta_vs_S3_load_shift_down_kwh  delta_vs_S3_load_shed_kwh  delta_vs_S3_unmet_load_kwh
+S3_full_coordination S3 未考虑寿命损耗        44474.640366                    712.383158               288.246269                 1000.629427                  45475.269793            64007.529861                     0.0           607.549635                  1.0            12952.421053    2757.060249         592.67625        3349.736499           23.2625          5649.375899       693.4075             0.0                         0.00000                                       0.0                             0.000000                                0.000000                                  0.000000                            0.000000                                 0.0                              0.0                              0.0                                 0.0                   0.000000                         0.000                       0.000000                           0.0                              0.0                        0.0                         0.0
+S4_degradation_aware  S4 考虑寿命损耗        44485.204175                    712.383158               260.825757                  973.208914                  45458.413090            63990.377963                     0.0           607.549635                  1.0            12952.421053    2581.143352         433.91125        3015.054602           23.2625          5649.375899       693.4075             0.0                        10.56381                                       0.0                           -27.420513                              -27.420513                                -16.856703                          -17.151898                                 0.0                              0.0                              0.0                                 0.0                -175.916898                      -158.765                    -334.681898                           0.0                              0.0                        0.0                         0.0
+
+4. 主要变化
+固定储能吞吐量变化：0.000 kWh。
+EV 吞吐量变化：-334.682 kWh。
+运行成本变化：10.564 元。
+寿命损耗成本变化：-27.421 元。
+综合成本变化：-16.857 元。
+
+5. 约束检查提示
+S3_full_coordination：
+  - 存在 EV 离站电量缺口松弛变量大于 0，说明至少一个会话在物理充电功率和停留时长下无法达到需求。
+S4_degradation_aware：
+  - 存在 EV 离站电量缺口松弛变量大于 0，说明至少一个会话在物理充电功率和停留时长下无法达到需求。
+
+6. 小问结论
+引入寿命损耗后，模型只有在运行收益能够覆盖电池寿命成本时才会调用固定储能或 EV V2B。
+因此 S4 能体现短期运行经济性与长期电池健康之间的权衡。

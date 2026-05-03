@@ -10,7 +10,7 @@ C_degradation = c_deg × E_throughput
 其中 Δt = 0.25 h。该指标保持线性，便于后续直接加入线性规划目标函数。
 
 2. 参数设定
-固定储能单位吞吐寿命成本暂取：0.0500 元/kWh。
+固定储能单位吞吐寿命成本取自 asset_parameters.csv：0.0550 元/kWh。
 EV 单位吞吐寿命成本使用 ev_sessions.csv 中的 degradation_cost_cny_per_kwh_throughput 字段。
 
 EV 寿命成本参数按车型统计：
@@ -22,9 +22,9 @@ compact             40                 0.093               0.100475             
 3. 基于第一问四方案的寿命损耗指标试算
                  scheme  battery_charge_kwh  battery_discharge_kwh  battery_throughput_kwh  battery_degradation_cost_cny  ev_charge_kwh  ev_discharge_kwh  ev_throughput_kwh  ev_degradation_cost_cny  total_degradation_cost_cny
           S0_no_storage            0.000000                0.00000                0.000000                      0.000000    2100.355263           0.00000        2100.355263               181.105013                  181.105013
-        S1_rule_storage            0.000000              456.00000              456.000000                     22.800000    2100.355263           0.00000        2100.355263               181.105013                  203.905013
-S2_partial_coordination         6573.573872             6388.65042            12962.224292                    648.111215    2100.355263           0.00000        2100.355263               180.736476                  828.847690
-   S3_full_coordination         6568.421053             6384.00000            12952.421053                    647.621053    2757.060249         592.67625        3349.736499               288.246269                  935.867322
+        S1_rule_storage            0.000000              456.00000              456.000000                     25.080000    2100.355263           0.00000        2100.355263               181.105013                  206.185013
+S2_partial_coordination         6573.573872             6388.65042            12962.224292                    712.922336    2100.355263           0.00000        2100.355263               180.736476                  893.658812
+   S3_full_coordination         6568.421053             6384.00000            12952.421053                    712.383158    2757.060249         592.67625        3349.736499               288.246269                 1000.629427
 
 4. 结论
 该小问已经给出固定储能与 EV 电池寿命损耗的统一度量方式。

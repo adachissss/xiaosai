@@ -39,10 +39,16 @@ E_throughput = Σ(P_charge + P_discharge) × Δt
 C_degradation = c_deg × E_throughput
 ```
 
-固定储能单位吞吐寿命成本暂取：
+固定储能单位吞吐寿命成本来自：
 
 ```text
-0.05 元/kWh
+B/B_data/asset_parameters.csv
+```
+
+字段：
+
+```text
+stationary_battery_degradation_cost_cny_per_kwh_throughput = 0.055 元/kWh
 ```
 
 EV 单位吞吐寿命成本来自：

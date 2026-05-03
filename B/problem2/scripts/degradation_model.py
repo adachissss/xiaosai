@@ -15,9 +15,9 @@ import pandas as pd
 # 附件数据是 15 分钟分辨率，因此功率 kW 转电量 kWh 时乘以 0.25 h。
 DT = 0.25
 
-# 固定储能没有像 EV 一样给出逐设备寿命成本，这里先采用一个可解释的基准值。
-# 后续做敏感性分析时，可以通过命令行参数 --battery-unit-cost 改变该值。
-DEFAULT_STATIONARY_BATTERY_DEG_COST = 0.05
+# 固定储能寿命成本优先使用 asset_parameters.csv 中的给定值。
+# 这里的默认值只作为兜底，主入口脚本会从数据表读取 0.055 元/kWh。
+DEFAULT_STATIONARY_BATTERY_DEG_COST = 0.055
 
 
 @dataclass(frozen=True)
@@ -134,6 +134,17 @@ def load_problem1_scheme(problem1_results_dir: Path, scheme: str) -> tuple[pd.Da
     schedule = pd.read_csv(problem1_results_dir / f"{scheme}_schedule.csv", parse_dates=["timestamp"])
     ev_result = pd.read_csv(problem1_results_dir / f"{scheme}_ev_results.csv")
     return schedule, ev_result
+
+
+def load_stationary_battery_degradation_cost(data_dir: Path) -> float:
+    """从 asset_parameters.csv 读取固定储能单位吞吐寿命成本。"""
+
+    asset = pd.read_csv(data_dir / "asset_parameters.csv")
+    key = "stationary_battery_degradation_cost_cny_per_kwh_throughput"
+    matched = asset.loc[asset["parameter"] == key, "value"]
+    if matched.empty:
+        return DEFAULT_STATIONARY_BATTERY_DEG_COST
+    return float(matched.iloc[0])
 
 
 def load_ev_degradation_parameter_summary(data_dir: Path) -> pd.DataFrame:

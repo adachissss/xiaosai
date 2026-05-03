@@ -15,9 +15,9 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from degradation_model import (
-    DEFAULT_STATIONARY_BATTERY_DEG_COST,
     evaluate_scheme,
     load_ev_degradation_parameter_summary,
+    load_stationary_battery_degradation_cost,
     load_problem1_scheme,
     result_to_dict,
 )
@@ -88,7 +88,7 @@ def write_summary(metrics: pd.DataFrame, ev_param_summary: pd.DataFrame, out_pat
         "其中 Δt = 0.25 h。该指标保持线性，便于后续直接加入线性规划目标函数。",
         "",
         "2. 参数设定",
-        f"固定储能单位吞吐寿命成本暂取：{battery_unit_cost:.4f} 元/kWh。",
+        f"固定储能单位吞吐寿命成本取自 asset_parameters.csv：{battery_unit_cost:.4f} 元/kWh。",
         "EV 单位吞吐寿命成本使用 ev_sessions.csv 中的 degradation_cost_cny_per_kwh_throughput 字段。",
         "",
         "EV 寿命成本参数按车型统计：",
@@ -109,14 +109,18 @@ def main() -> None:
     parser.add_argument("--problem1-results-dir", type=Path, default=Path(__file__).resolve().parents[2] / "problem1" / "results")
     parser.add_argument("--data-dir", type=Path, default=Path(__file__).resolve().parents[2] / "B_data")
     parser.add_argument("--out-dir", type=Path, default=Path(__file__).resolve().parents[1] / "results")
-    parser.add_argument("--battery-unit-cost", type=float, default=DEFAULT_STATIONARY_BATTERY_DEG_COST)
+    parser.add_argument("--battery-unit-cost", type=float, default=None)
     args = parser.parse_args()
+
+    battery_unit_cost = args.battery_unit_cost
+    if battery_unit_cost is None:
+        battery_unit_cost = load_stationary_battery_degradation_cost(args.data_dir)
 
     # 逐个读取第一问结果，并把调度功率换算成寿命损耗指标。
     rows = []
     for scheme in SCHEMES:
         schedule, ev_result = load_problem1_scheme(args.problem1_results_dir, scheme)
-        rows.append(result_to_dict(evaluate_scheme(scheme, schedule, ev_result, args.data_dir, args.battery_unit_cost)))
+        rows.append(result_to_dict(evaluate_scheme(scheme, schedule, ev_result, args.data_dir, battery_unit_cost)))
     metrics = pd.DataFrame(rows)
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
@@ -128,7 +132,7 @@ def main() -> None:
     metrics.to_csv(args.out_dir / "p2_q1_degradation_metrics.csv", index=False)
     ev_param_summary.to_csv(args.out_dir / "p2_q1_ev_degradation_parameters.csv", index=False)
     plot_degradation_metrics(metrics, fig_dir)
-    write_summary(metrics, ev_param_summary, args.out_dir / "p2_q1_summary.txt", args.battery_unit_cost)
+    write_summary(metrics, ev_param_summary, args.out_dir / "p2_q1_summary.txt", battery_unit_cost)
 
     print((args.out_dir / "p2_q1_summary.txt").read_text(encoding="utf-8"))
     print(f"\nFigures saved to: {fig_dir}")

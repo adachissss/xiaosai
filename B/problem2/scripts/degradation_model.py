@@ -1,17 +1,28 @@
 from __future__ import annotations
 
+"""第二问第 1 小问：电池寿命损耗指标计算。
+
+本脚本只负责把第一问已有调度结果换算成寿命损耗指标，暂不改变调度方案。
+核心思想是用“充放电等效吞吐量”衡量电池使用强度，再乘以单位吞吐成本折算为寿命损耗成本。
+"""
+
 from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
+# 附件数据是 15 分钟分辨率，因此功率 kW 转电量 kWh 时乘以 0.25 h。
 DT = 0.25
+
+# 固定储能没有像 EV 一样给出逐设备寿命成本，这里先采用一个可解释的基准值。
+# 后续做敏感性分析时，可以通过命令行参数 --battery-unit-cost 改变该值。
 DEFAULT_STATIONARY_BATTERY_DEG_COST = 0.05
 
 
 @dataclass(frozen=True)
 class DegradationResult:
+    """单个方案的寿命损耗评价结果。"""
     scheme: str
     battery_charge_kwh: float
     battery_discharge_kwh: float
@@ -31,6 +42,12 @@ def battery_degradation_cost(
     schedule: pd.DataFrame,
     unit_cost_cny_per_kwh: float = DEFAULT_STATIONARY_BATTERY_DEG_COST,
 ) -> tuple[float, float, float, float]:
+    """计算固定储能寿命损耗。
+
+    吞吐量按充电电量和放电电量相加计算：
+    throughput = Σ(P_battery_charge + P_battery_discharge) × Δt。
+    """
+
     charge_kwh = float((schedule["battery_charge_kw"] * DT).sum())
     discharge_kwh = float((schedule["battery_discharge_kw"] * DT).sum())
     throughput_kwh = charge_kwh + discharge_kwh
@@ -39,6 +56,13 @@ def battery_degradation_cost(
 
 
 def ev_degradation_cost(schedule: pd.DataFrame, ev_result: pd.DataFrame, data_dir: Path) -> tuple[float, float, float, float]:
+    """计算 EV 车队寿命损耗。
+
+    第一问结果文件只保留了 EV 聚合充放电功率，没有保留每辆车逐时段功率。
+    因此第 1 小问先用全车队聚合吞吐量计算总损耗，再用会话结果估算一个加权平均 EV 单位寿命成本。
+    后续第 2 小问直接在 LP 中保留车辆级变量时，可以精确写成 Σ_i c_i × throughput_i。
+    """
+
     charge_kwh = float((schedule["ev_charge_total_kw"] * DT).sum())
     discharge_kwh = float((schedule["ev_discharge_total_kw"] * DT).sum())
     throughput_kwh = charge_kwh + discharge_kwh
@@ -50,6 +74,8 @@ def ev_degradation_cost(schedule: pd.DataFrame, ev_result: pd.DataFrame, data_di
     cost_map = ev_sessions.set_index("session_id")[cost_col]
 
     ev = ev_result.copy()
+    # S102 这类物理不可达会话会有 shortfall。这里把 shortfall 加回去，表示车辆真实需求缺口，
+    # 避免因为物理不可达导致估算的平均 EV 寿命成本偏低。
     ev["net_energy_gain_kwh"] = (ev["final_energy_kwh"] + ev.get("shortfall_kwh", 0.0)) - ev["initial_energy_kwh"]
     ev["estimated_throughput_kwh"] = np.maximum(0.0, ev["net_energy_gain_kwh"])
     ev["unit_degradation_cost_cny_per_kwh"] = ev["session_id"].map(cost_map)
@@ -72,6 +98,8 @@ def evaluate_scheme(
     data_dir: Path,
     battery_unit_cost: float = DEFAULT_STATIONARY_BATTERY_DEG_COST,
 ) -> DegradationResult:
+    """对一个第一问方案计算固定储能、EV 和合计寿命损耗成本。"""
+
     bat_ch, bat_dis, bat_th, bat_cost = battery_degradation_cost(schedule, battery_unit_cost)
     ev_ch, ev_dis, ev_th, ev_cost = ev_degradation_cost(schedule, ev_result, data_dir)
     return DegradationResult(

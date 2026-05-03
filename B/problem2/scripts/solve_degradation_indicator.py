@@ -1,5 +1,12 @@
 from __future__ import annotations
 
+"""第二问第 1 小问入口脚本。
+
+该脚本不重新优化调度，而是读取第一问 S0/S1/S2/S3 的结果，
+按照“等效吞吐量 × 单位寿命成本”的方法计算寿命损耗指标，
+从而回答题目要求的“提出寿命损耗指标或成本折算方式”。
+"""
+
 import argparse
 from pathlib import Path
 
@@ -15,6 +22,7 @@ from degradation_model import (
     result_to_dict,
 )
 
+# 用第一问已经生成的四个方案做试算，说明该寿命损耗指标如何落地计算。
 SCHEMES = [
     "S0_no_storage",
     "S1_rule_storage",
@@ -36,6 +44,8 @@ mpl.rcParams.update({
 
 
 def plot_degradation_metrics(metrics: pd.DataFrame, out_dir: Path) -> None:
+    """生成第 1 小问的两张核心图：吞吐量指标图和寿命成本折算图。"""
+
     out_dir.mkdir(parents=True, exist_ok=True)
     x = range(len(metrics))
 
@@ -63,6 +73,8 @@ def plot_degradation_metrics(metrics: pd.DataFrame, out_dir: Path) -> None:
 
 
 def write_summary(metrics: pd.DataFrame, ev_param_summary: pd.DataFrame, out_path: Path, battery_unit_cost: float) -> None:
+    """输出文字摘要，方便后续直接查看第 1 小问的公式、参数和试算结果。"""
+
     lines = [
         "B题第二问第1小问：电池寿命损耗指标与成本折算",
         "=" * 60,
@@ -100,6 +112,7 @@ def main() -> None:
     parser.add_argument("--battery-unit-cost", type=float, default=DEFAULT_STATIONARY_BATTERY_DEG_COST)
     args = parser.parse_args()
 
+    # 逐个读取第一问结果，并把调度功率换算成寿命损耗指标。
     rows = []
     for scheme in SCHEMES:
         schedule, ev_result = load_problem1_scheme(args.problem1_results_dir, scheme)
@@ -110,6 +123,7 @@ def main() -> None:
     fig_dir = args.out_dir / "figures"
     fig_dir.mkdir(parents=True, exist_ok=True)
 
+    # 输出三类结果：指标表、EV 参数统计表、图片和文字摘要。
     ev_param_summary = load_ev_degradation_parameter_summary(args.data_dir)
     metrics.to_csv(args.out_dir / "p2_q1_degradation_metrics.csv", index=False)
     ev_param_summary.to_csv(args.out_dir / "p2_q1_ev_degradation_parameters.csv", index=False)

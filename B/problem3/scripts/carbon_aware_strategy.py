@@ -216,7 +216,9 @@ def build_and_solve_carbon_aware(
             eq(row, 0.0)
 
     # --- 新增：全周总碳排放上限约束 ---
+    carbon_constraint_row = None
     if carbon_cap_kg is not None and carbon_cap_kg < float("inf"):
+        carbon_constraint_row = len(ub_rows)  # 记录碳约束的行号，用于提取影子价格
         carbon_row: dict[int, float] = {}
         for t in range(T):
             carbon_row[grid_buy[t]] = carbon_intensity[t] * DT
@@ -240,6 +242,19 @@ def build_and_solve_carbon_aware(
     result = linprog(c, A_ub=A_ub, b_ub=np.array(b_ub) if b_ub else None, A_eq=A_eq, b_eq=np.array(b_eq), bounds=bounds, method="highs")
     if not result.success:
         raise RuntimeError(f"考虑碳排放的协同优化模型求解失败：{result.message}")
+
+    # 提取碳约束的影子价格（边际减排成本，元/kg CO2）
+    # HiGHS 对 A_ub @ x ≤ b_ub 约束返回的 marginals 符号约定为负值，
+    # 经济学意义上的影子价格 = ∂objective / ∂relaxation = -marginals
+    carbon_dual = None
+    if carbon_constraint_row is not None:
+        try:
+            if hasattr(result, 'ineqlin') and isinstance(result.ineqlin, dict):
+                marginals = result.ineqlin.get('marginals')
+                if marginals is not None and carbon_constraint_row < len(marginals):
+                    carbon_dual = -float(marginals[carbon_constraint_row])  # 符号修正
+        except Exception:
+            pass
 
     x = result.x
     ev_ch_total = x[ev_ch].sum(axis=0)
@@ -287,7 +302,12 @@ def build_and_solve_carbon_aware(
     ev_result["degradation_cost_cny"] = ev_result["total_throughput_kwh"] * ev_result["unit_degradation_cost_cny_per_kwh"]
 
     total_carbon_kg = float(np.dot(x[grid_buy], carbon_intensity * DT))
-    carbon_cost_cny = total_carbon_kg * carbon_price_cny_per_kg
+    # 碳交易成本 = 碳价 × (实际排放 − 免费配额)
+    # 若无配额上限（碳税模式），免费配额=0，成本 = 碳价 × 全排放
+    if carbon_cap_kg is not None and not np.isinf(carbon_cap_kg):
+        carbon_cost_cny = carbon_price_cny_per_kg * (total_carbon_kg - carbon_cap_kg)
+    else:
+        carbon_cost_cny = total_carbon_kg * carbon_price_cny_per_kg
 
     return schedule, ev_result, {
         "objective": result.fun,
@@ -297,4 +317,5 @@ def build_and_solve_carbon_aware(
         "carbon_cap_kg": carbon_cap_kg,
         "total_carbon_kg": total_carbon_kg,
         "carbon_trading_cost_cny": carbon_cost_cny,
+        "carbon_shadow_price_cny_per_kg": carbon_dual,
     }

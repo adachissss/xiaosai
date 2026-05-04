@@ -33,6 +33,9 @@ problem3/
 │       ├── p3_q2_battery_ev_by_price.png
 │       └── p3_q2_cost_breakdown_by_price.png
 ├── 第三问分析思路.md
+├── 第三问第1小问解决思路.md
+├── 第三问第2小问解决思路.md
+├── 第三问第3小问解决思路.md
 └── README.md
 ```
 

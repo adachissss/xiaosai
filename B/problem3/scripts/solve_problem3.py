@@ -7,7 +7,6 @@ import sys
 from pathlib import Path
 
 import matplotlib as mpl
-import matplotlib.font_manager as fm
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -26,22 +25,10 @@ from carbon_aware_strategy import build_and_solve_carbon_aware  # noqa: E402
 # ------------------------------
 # 中文字体和 matplotlib 样式
 # ------------------------------
-# 尝试加载中文字体，若不可用则回退到 sans-serif
-_chinese_font = "sans-serif"
-for _candidate in [
-    "/usr/share/fonts/google-noto-sans-cjk-vf-fonts/NotoSansCJK-VF.ttc",
-    "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
-]:
-    try:
-        _chinese_font = fm.FontProperties(fname=_candidate).get_name()
-        break
-    except Exception:
-        continue
+mpl.rcParams['font.sans-serif'] = ['LXGW Bright']
+mpl.rcParams['axes.unicode_minus'] = False
 
 mpl.rcParams.update({
-    "font.family": _chinese_font,
-    "font.sans-serif": [_chinese_font, "DejaVu Sans", "sans-serif"],
-    "axes.unicode_minus": False,
     "axes.spines.top": False,
     "axes.spines.right": False,
     "axes.grid": True,
@@ -190,7 +177,7 @@ def _plot_q1_results(metrics: pd.DataFrame, schedules: dict[str, pd.DataFrame], 
     ax.set_xticks(x)
     ax.set_xticklabels(labels)
     ax.set_ylabel("碳排放 / kg CO2")
-    ax.set_title("不同碳排放上限下的实际碳排放", fontweight="bold", pad=12)
+    ax.set_title("不同碳排放上限下的实际碳排放", pad=12)
     # annotate
     ymax = float(metrics["total_carbon_kg"].max()) * 1.18
     ax.set_ylim(0, ymax)
@@ -207,7 +194,7 @@ def _plot_q1_results(metrics: pd.DataFrame, schedules: dict[str, pd.DataFrame], 
     ax1.set_xticks(x)
     ax1.set_xticklabels(labels)
     ax1.set_ylabel("购电总量 / kWh")
-    ax1.set_title("不同碳排放上限下外网购电行为变化", fontweight="bold", pad=12)
+    ax1.set_title("不同碳排放上限下外网购电行为变化", pad=12)
     ax2 = ax1.twinx()
     ax2.plot(x, metrics["peak_grid_import_kw"], color="#DC2626", marker="D", linewidth=1.8, label="峰值购电")
     ax2.set_ylabel("峰值购电功率 / kW", color="#DC2626")
@@ -226,7 +213,7 @@ def _plot_q1_results(metrics: pd.DataFrame, schedules: dict[str, pd.DataFrame], 
     ax.set_xticks(x)
     ax.set_xticklabels(labels)
     ax.set_ylabel("等效吞吐量 / kWh")
-    ax.set_title("不同碳排放上限下电池吞吐量变化", fontweight="bold", pad=12)
+    ax.set_title("不同碳排放上限下电池吞吐量变化", pad=12)
     ax.legend(loc="upper left", frameon=True, ncol=2)
     totals = metrics["battery_throughput_kwh"] + metrics["ev_throughput_kwh"]
     ax.set_ylim(0, float(totals.max()) * 1.18)
@@ -244,7 +231,7 @@ def _plot_q1_results(metrics: pd.DataFrame, schedules: dict[str, pd.DataFrame], 
     ax.set_xticks(x)
     ax.set_xticklabels(labels)
     ax.set_ylabel("成本 / 元")
-    ax.set_title("不同碳排放上限下成本构成变化", fontweight="bold", pad=12)
+    ax.set_title("不同碳排放上限下成本构成变化", pad=12)
     ax.legend(loc="upper left", frameon=True, ncol=3)
     totals = metrics["operation_cost_cny"] + metrics["total_degradation_cost_cny"]
     ax.set_ylim(0, float(totals.max()) * 1.18)
@@ -332,7 +319,7 @@ def _plot_q2_results(metrics: pd.DataFrame, fig_dir: Path):
     ax.set_xticklabels([f"{p:.0f}" for p in prices])
     ax.set_xlabel("碳交易价格 / (元/吨 CO2)")
     ax.set_ylabel("碳排放 / kg CO2")
-    ax.set_title("不同碳交易价格下的总碳排放量", fontweight="bold", pad=12)
+    ax.set_title("不同碳交易价格下的总碳排放量", pad=12)
     ymax = float(metrics["total_carbon_kg"].max()) * 1.18
     ax.set_ylim(0, ymax)
     for i, v in enumerate(metrics["total_carbon_kg"]):
@@ -348,7 +335,7 @@ def _plot_q2_results(metrics: pd.DataFrame, fig_dir: Path):
     ax1.set_xticklabels([f"{p:.0f}" for p in prices])
     ax1.set_xlabel("碳交易价格 / (元/吨 CO2)")
     ax1.set_ylabel("购电总量 / kWh")
-    ax1.set_title("不同碳价下外网购电行为变化", fontweight="bold", pad=12)
+    ax1.set_title("不同碳价下外网购电行为变化", pad=12)
     ax2 = ax1.twinx()
     ax2.plot(x, metrics["peak_grid_import_kw"], color="#DC2626", marker="D", linewidth=1.8, label="峰值购电")
     ax2.set_ylabel("峰值购电功率 / kW", color="#DC2626")
@@ -368,7 +355,7 @@ def _plot_q2_results(metrics: pd.DataFrame, fig_dir: Path):
     ax.set_xticklabels([f"{p:.0f}" for p in prices])
     ax.set_xlabel("碳交易价格 / (元/吨 CO2)")
     ax.set_ylabel("等效吞吐量 / kWh")
-    ax.set_title("不同碳价下固定储能和 EV 吞吐量变化", fontweight="bold", pad=12)
+    ax.set_title("不同碳价下固定储能和 EV 吞吐量变化", pad=12)
     ax.legend(loc="upper left", frameon=True, ncol=2)
     totals = metrics["battery_throughput_kwh"] + metrics["ev_throughput_kwh"]
     ax.set_ylim(0, float(totals.max()) * 1.18)
@@ -389,7 +376,7 @@ def _plot_q2_results(metrics: pd.DataFrame, fig_dir: Path):
     ax.set_xticklabels([f"{p:.0f}" for p in prices])
     ax.set_xlabel("碳交易价格 / (元/吨 CO2)")
     ax.set_ylabel("成本 / 元")
-    ax.set_title("不同碳价下综合成本构成变化", fontweight="bold", pad=12)
+    ax.set_title("不同碳价下综合成本构成变化", pad=12)
     ax.legend(loc="upper left", frameon=True, ncol=3)
     totals = metrics["total_comprehensive_cost_cny"]
     ax.set_ylim(0, float(totals.max()) * 1.18)
@@ -482,7 +469,7 @@ def _plot_joint_results(metrics: pd.DataFrame, fig_dir: Path, cap_kg: float):
     ax.set_xticklabels([f"{p:.0f}" for p in prices])
     ax.set_xlabel("碳交易价格 / (元/吨 CO2)")
     ax.set_ylabel("碳排放 / kg CO2")
-    ax.set_title("碳交易机制下：碳排放 vs 碳价（cap + price 同时存在）", fontweight="bold", pad=12)
+    ax.set_title("碳交易机制下：碳排放 vs 碳价（cap + price 同时存在）", pad=12)
     ax.legend(loc="upper right", frameon=True)
     ymin = min(float(metrics["total_carbon_kg"].min()), cap_kg) * 0.95
     ymax = max(float(metrics["total_carbon_kg"].max()), cap_kg) * 1.1
@@ -511,7 +498,7 @@ def _plot_joint_results(metrics: pd.DataFrame, fig_dir: Path, cap_kg: float):
     ax.set_xticklabels([f"{p:.0f}" for p in prices])
     ax.set_xlabel("碳交易价格 / (元/吨 CO2)")
     ax.set_ylabel("碳交易净成本 / 元（负值=出售获利）")
-    ax.set_title(f"碳交易净支出（配额={cap_kg:.0f} kg）", fontweight="bold", pad=12)
+    ax.set_title(f"碳交易净支出（配额={cap_kg:.0f} kg）", pad=12)
     yabs = max(abs(float(metrics["carbon_trading_cost_cny"].min())),
                abs(float(metrics["carbon_trading_cost_cny"].max()))) * 1.3
     ax.set_ylim(-yabs, yabs)
@@ -539,7 +526,7 @@ def _plot_joint_results(metrics: pd.DataFrame, fig_dir: Path, cap_kg: float):
     ax.set_xticklabels([f"{p:.0f}" for p in prices])
     ax.set_xlabel("碳交易价格 / (元/吨 CO2)")
     ax.set_ylabel("成本 / 元")
-    ax.set_title(f"碳交易机制下综合成本构成（配额={cap_kg:.0f} kg）", fontweight="bold", pad=12)
+    ax.set_title(f"碳交易机制下综合成本构成（配额={cap_kg:.0f} kg）", pad=12)
     handles, labels = ax.get_legend_handles_labels()
     by_label = dict(zip(labels, handles))
     ax.legend(by_label.values(), by_label.keys(), loc="upper left", frameon=True, ncol=4)
@@ -616,7 +603,7 @@ def _plot_pareto_frontier(pareto_df: pd.DataFrame, fig_dir: Path, baseline: floa
 
     ax.set_xlabel("碳排放 / kg CO2")
     ax.set_ylabel("成本 / 元")
-    ax.set_title("Pareto 前沿：经济性 vs 碳排放", fontweight="bold", pad=12)
+    ax.set_title("Pareto 前沿：经济性 vs 碳排放", pad=12)
     ax.legend(loc="upper left", frameon=True, ncol=2)
     ax.invert_xaxis()
     fig.subplots_adjust(left=0.1, right=0.98, top=0.88, bottom=0.15)
@@ -635,7 +622,7 @@ def _plot_pareto_frontier(pareto_df: pd.DataFrame, fig_dir: Path, baseline: floa
                 linewidth=1.8, markersize=7)
         ax.set_xlabel("碳排放 / kg CO2")
         ax.set_ylabel("边际减排成本 / (元/吨 CO2)")
-        ax.set_title("边际减排成本曲线（碳约束的影子价格）", fontweight="bold", pad=12)
+        ax.set_title("边际减排成本曲线（碳约束的影子价格）", pad=12)
         ax.axhline(100, color="#6B7280", linewidth=1, linestyle=":", alpha=0.7,
                    label="中国碳市场参考价 100 元/吨")
         ax.axhline(500, color="#F97316", linewidth=1, linestyle=":", alpha=0.7,

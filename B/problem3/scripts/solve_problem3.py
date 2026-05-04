@@ -182,7 +182,7 @@ def _plot_q1_results(metrics: pd.DataFrame, schedules: dict[str, pd.DataFrame], 
     ymax = float(metrics["total_carbon_kg"].max()) * 1.18
     ax.set_ylim(0, ymax)
     for i, v in enumerate(metrics["total_carbon_kg"]):
-        ax.text(i, v + ymax * 0.02, f"{v:.0f}", ha="center", va="bottom", fontsize=9, color="#374151")
+        ax.text(i + 0.3, v - ymax * 0.02, f"{v:.0f}", ha="left", va="top", fontsize=9, color="#374151")
     fig.text(0.5, 0.015, "注：虚线表示该场景的碳排放上限；无约束场景无虚线标记。", ha="center", fontsize=10, color="#4B5563")
     fig.subplots_adjust(left=0.1, right=0.98, top=0.88, bottom=0.2)
     fig.savefig(fig_dir / "p3_q1_emissions_by_cap.png")
@@ -199,9 +199,13 @@ def _plot_q1_results(metrics: pd.DataFrame, schedules: dict[str, pd.DataFrame], 
     ax2.plot(x, metrics["peak_grid_import_kw"], color="#DC2626", marker="D", linewidth=1.8, label="峰值购电")
     ax2.set_ylabel("峰值购电功率 / kW", color="#DC2626")
     ax2.tick_params(axis="y", labelcolor="#DC2626")
+    # ax2（折线）置于 ax1（柱状图）上层，图例放在 ax2 上避免被覆盖
+    ax1.set_zorder(1)
+    ax2.set_zorder(2)
+    ax1.patch.set_visible(False)
     lines1, labs1 = ax1.get_legend_handles_labels()
     lines2, labs2 = ax2.get_legend_handles_labels()
-    ax1.legend(lines1 + lines2, labs1 + labs2, loc="upper left", frameon=True, ncol=2)
+    ax2.legend(lines1 + lines2, labs1 + labs2, loc="upper left", frameon=True, ncol=1, framealpha=0.4)
     fig.subplots_adjust(left=0.08, right=0.9, top=0.88, bottom=0.18)
     fig.savefig(fig_dir / "p3_q1_grid_import_by_cap.png")
     plt.close(fig)
@@ -214,7 +218,7 @@ def _plot_q1_results(metrics: pd.DataFrame, schedules: dict[str, pd.DataFrame], 
     ax.set_xticklabels(labels)
     ax.set_ylabel("等效吞吐量 / kWh")
     ax.set_title("不同碳排放上限下电池吞吐量变化", pad=12)
-    ax.legend(loc="upper left", frameon=True, ncol=2)
+    ax.legend(loc="upper left", frameon=True, ncol=1, framealpha=0.4)
     totals = metrics["battery_throughput_kwh"] + metrics["ev_throughput_kwh"]
     ax.set_ylim(0, float(totals.max()) * 1.18)
     for i, v in enumerate(totals):
@@ -232,7 +236,7 @@ def _plot_q1_results(metrics: pd.DataFrame, schedules: dict[str, pd.DataFrame], 
     ax.set_xticklabels(labels)
     ax.set_ylabel("成本 / 元")
     ax.set_title("不同碳排放上限下成本构成变化", pad=12)
-    ax.legend(loc="upper left", frameon=True, ncol=3)
+    ax.legend(loc="upper left", frameon=True, ncol=1, framealpha=0.4)
     totals = metrics["operation_cost_cny"] + metrics["total_degradation_cost_cny"]
     ax.set_ylim(0, float(totals.max()) * 1.18)
     for i, v in enumerate(totals):
@@ -340,9 +344,13 @@ def _plot_q2_results(metrics: pd.DataFrame, fig_dir: Path):
     ax2.plot(x, metrics["peak_grid_import_kw"], color="#DC2626", marker="D", linewidth=1.8, label="峰值购电")
     ax2.set_ylabel("峰值购电功率 / kW", color="#DC2626")
     ax2.tick_params(axis="y", labelcolor="#DC2626")
+    # ax2（折线）置于 ax1（柱状图）上层，图例放在 ax2 上避免被覆盖
+    ax1.set_zorder(1)
+    ax2.set_zorder(2)
+    ax1.patch.set_visible(False)
     lines1, labs1 = ax1.get_legend_handles_labels()
     lines2, labs2 = ax2.get_legend_handles_labels()
-    ax1.legend(lines1 + lines2, labs1 + labs2, loc="upper left", frameon=True, ncol=2)
+    ax2.legend(lines1 + lines2, labs1 + labs2, loc="upper left", frameon=True, ncol=1, framealpha=0.4)
     fig.subplots_adjust(left=0.08, right=0.9, top=0.88, bottom=0.2)
     fig.savefig(fig_dir / "p3_q2_grid_import_by_price.png")
     plt.close(fig)
@@ -356,7 +364,7 @@ def _plot_q2_results(metrics: pd.DataFrame, fig_dir: Path):
     ax.set_xlabel("碳交易价格 / (元/吨 CO2)")
     ax.set_ylabel("等效吞吐量 / kWh")
     ax.set_title("不同碳价下固定储能和 EV 吞吐量变化", pad=12)
-    ax.legend(loc="upper left", frameon=True, ncol=2)
+    ax.legend(loc="upper left", frameon=True, ncol=1, framealpha=0.4)
     totals = metrics["battery_throughput_kwh"] + metrics["ev_throughput_kwh"]
     ax.set_ylim(0, float(totals.max()) * 1.18)
     for i, v in enumerate(totals):
@@ -377,7 +385,7 @@ def _plot_q2_results(metrics: pd.DataFrame, fig_dir: Path):
     ax.set_xlabel("碳交易价格 / (元/吨 CO2)")
     ax.set_ylabel("成本 / 元")
     ax.set_title("不同碳价下综合成本构成变化", pad=12)
-    ax.legend(loc="upper left", frameon=True, ncol=3)
+    ax.legend(loc="upper left", frameon=True, ncol=1, framealpha=0.4)
     totals = metrics["total_comprehensive_cost_cny"]
     ax.set_ylim(0, float(totals.max()) * 1.18)
     for i, v in enumerate(totals):
@@ -470,7 +478,7 @@ def _plot_joint_results(metrics: pd.DataFrame, fig_dir: Path, cap_kg: float):
     ax.set_xlabel("碳交易价格 / (元/吨 CO2)")
     ax.set_ylabel("碳排放 / kg CO2")
     ax.set_title("碳交易机制下：碳排放 vs 碳价（cap + price 同时存在）", pad=12)
-    ax.legend(loc="upper right", frameon=True)
+    ax.legend(loc="upper right", frameon=True, framealpha=0.4)
     ymin = min(float(metrics["total_carbon_kg"].min()), cap_kg) * 0.95
     ymax = max(float(metrics["total_carbon_kg"].max()), cap_kg) * 1.1
     ax.set_ylim(ymin, ymax)
@@ -529,7 +537,7 @@ def _plot_joint_results(metrics: pd.DataFrame, fig_dir: Path, cap_kg: float):
     ax.set_title(f"碳交易机制下综合成本构成（配额={cap_kg:.0f} kg）", pad=12)
     handles, labels = ax.get_legend_handles_labels()
     by_label = dict(zip(labels, handles))
-    ax.legend(by_label.values(), by_label.keys(), loc="upper left", frameon=True, ncol=4)
+    ax.legend(by_label.values(), by_label.keys(), loc="upper left", frameon=True, ncol=1, framealpha=0.4)
     ymax = float(metrics["total_comprehensive_cost_cny"].max()) * 1.18
     ax.set_ylim(0, ymax)
     for i, v in enumerate(metrics["total_comprehensive_cost_cny"]):
@@ -604,7 +612,7 @@ def _plot_pareto_frontier(pareto_df: pd.DataFrame, fig_dir: Path, baseline: floa
     ax.set_xlabel("碳排放 / kg CO2")
     ax.set_ylabel("成本 / 元")
     ax.set_title("Pareto 前沿：经济性 vs 碳排放", pad=12)
-    ax.legend(loc="upper left", frameon=True, ncol=2)
+    ax.legend(loc="upper left", frameon=True, ncol=1, framealpha=0.4)
     ax.invert_xaxis()
     fig.subplots_adjust(left=0.1, right=0.98, top=0.88, bottom=0.15)
     fig.savefig(fig_dir / "p3_q3_pareto_frontier.png")
@@ -627,7 +635,7 @@ def _plot_pareto_frontier(pareto_df: pd.DataFrame, fig_dir: Path, baseline: floa
                    label="中国碳市场参考价 100 元/吨")
         ax.axhline(500, color="#F97316", linewidth=1, linestyle=":", alpha=0.7,
                    label="EU ETS 参考价 500 元/吨")
-        ax.legend(loc="upper left", frameon=True)
+        ax.legend(loc="upper left", frameon=True, framealpha=0.4)
         ax.invert_xaxis()
         fig.subplots_adjust(left=0.1, right=0.98, top=0.88, bottom=0.15)
         fig.savefig(fig_dir / "p3_q3_marginal_abatement_cost.png")

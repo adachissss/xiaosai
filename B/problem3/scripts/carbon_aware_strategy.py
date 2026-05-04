@@ -1,10 +1,17 @@
 from __future__ import annotations
 
-"""第三问：考虑碳排放约束和碳交易成本的协同优化模型（S5）。
+"""第三问：cap-and-trade 碳交易机制的协同优化模型（S5）。
 
-在 S4 模型（运行成本 + 电池寿命损耗成本）基础上增加：
-1. 碳排放交易成本：carbon_price × Σ(grid_buy[t] × carbon_intensity[t] × DT)
-2. 可选的全周总碳排放上限约束：Σ(grid_buy[t] × carbon_intensity[t] × DT) ≤ cap
+在 S4 模型（运行成本 + 电池寿命损耗成本）基础上增加碳交易成本。
+
+碳交易机制（cap-and-trade）：
+- 园区获得免费碳排放配额 free_allowance_kg
+- 实际碳排放超过配额时，须以 carbon_price 购买差额
+- 实际碳排放低于配额时，可以 carbon_price 卖出剩余配额获利
+- 碳交易成本 = carbon_price × (total_emissions - free_allowance)，可为负（收入）
+
+在 LP 目标函数中：c[grid_buy[t]] += carbon_price × carbon_intensity[t] × DT
+（free_allowance 是常量，不影响优化，只影响事后成本核算）
 """
 
 import sys
@@ -51,16 +58,17 @@ def build_and_solve_carbon_aware(
     data: ProblemData,
     *,
     carbon_price_cny_per_kg: float = 0.0,
-    carbon_cap_kg: float | None = None,
+    free_allowance_kg: float | None = None,
     scheme_name: str = "S5_carbon_aware",
 ) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
-    """求解 S5：考虑碳排放约束和碳交易成本的完整协同方案。
+    """求解 S5：cap-and-trade 碳交易机制下的完整协同方案。
 
     参数：
         carbon_price_cny_per_kg：碳交易价格（元/kg CO₂）。
             100 元/吨 = 0.10 元/kg。
-        carbon_cap_kg：全周总碳排放上限（kg CO₂）。
-            为 None 时表示不设硬约束。
+        free_allowance_kg：免费碳排放配额（kg CO₂）。
+            为 None 时表示无免费配额（所有排放均需购买）。
+            不影响 LP 优化，仅用于事后成本核算。
     """
 
     ts = data.ts.reset_index(drop=True)
@@ -114,7 +122,7 @@ def build_and_solve_carbon_aware(
         c[ev_ch[n, :]] += unit_cost * DT
         c[ev_dis[n, :]] += unit_cost * DT
 
-    # --- 碳排放交易成本（第三问新增） ---
+    # --- 碳排放交易成本（加入目标函数） ---
     carbon_intensity = ts["grid_carbon_kg_per_kwh"].to_numpy()
     c[grid_buy] += carbon_price_cny_per_kg * carbon_intensity * DT
 
@@ -215,13 +223,6 @@ def build_and_solve_carbon_aware(
                 row[shift_down[b, t]] = row.get(shift_down[b, t], 0.0) - rebound * DT
             eq(row, 0.0)
 
-    # --- 新增：全周总碳排放上限约束 ---
-    if carbon_cap_kg is not None and carbon_cap_kg < float("inf"):
-        carbon_row: dict[int, float] = {}
-        for t in range(T):
-            carbon_row[grid_buy[t]] = carbon_intensity[t] * DT
-        ub(carbon_row, carbon_cap_kg)
-
     # --- 求解 ---
     A_eq = lil_matrix((len(eq_rows), nvar), dtype=float)
     for r, row in enumerate(eq_rows):
@@ -287,14 +288,18 @@ def build_and_solve_carbon_aware(
     ev_result["degradation_cost_cny"] = ev_result["total_throughput_kwh"] * ev_result["unit_degradation_cost_cny_per_kwh"]
 
     total_carbon_kg = float(np.dot(x[grid_buy], carbon_intensity * DT))
-    carbon_cost_cny = total_carbon_kg * carbon_price_cny_per_kg
+    # cap-and-trade: 碳交易成本 = 碳价 × (实际排放 - 免费配额)，可为负（卖配额收入）
+    if free_allowance_kg is not None:
+        carbon_cost_cny = carbon_price_cny_per_kg * (total_carbon_kg - free_allowance_kg)
+    else:
+        carbon_cost_cny = carbon_price_cny_per_kg * total_carbon_kg
 
     return schedule, ev_result, {
         "objective": result.fun,
         "status": result.message,
         "scheme": scheme_name,
         "carbon_price_cny_per_kg": carbon_price_cny_per_kg,
-        "carbon_cap_kg": carbon_cap_kg,
+        "free_allowance_kg": free_allowance_kg,
         "total_carbon_kg": total_carbon_kg,
         "carbon_trading_cost_cny": carbon_cost_cny,
     }
